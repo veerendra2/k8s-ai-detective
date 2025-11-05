@@ -1,0 +1,83 @@
+---
+version: "3"
+silent: true
+
+vars:
+  MAIN_FILE: main.go
+  APP_NAME:
+    sh: grep 'const appName' {{.MAIN_FILE}} | awk -F'"' '{print $2}'
+  GOPATH_BIN:
+    sh: echo "$(go env GOPATH)/bin"
+  BRANCH:
+    sh: git rev-parse --abbrev-ref HEAD
+  BUILD_TIME:
+    sh: date '+%Y-%m-%d@%H:%M:%S'
+  BUILD_USER:
+    sh: id -un
+  REVISION:
+    sh: git rev-parse HEAD
+  VERSION:
+    sh: git describe --tags --always
+
+env:
+  GOBIN: "{{.GOPATH_BIN }}"
+
+tasks:
+  run:
+    desc: "Runs the main application"
+    deps:
+      - vet
+    cmds:
+      - go run {{.MAIN_FILE}}
+    env:
+      LOG_FORMAT: console
+
+  fmt:
+    desc: "Formats all Go source files"
+    cmds:
+      - go fmt ./...
+
+  vet:
+    desc: "Examines Go source code and reports suspicious constructs"
+    cmds:
+      - go vet ./...
+
+  test:
+    desc: "Runs all tests in the project"
+    aliases:
+      - tests
+    deps:
+      - vet
+    cmds:
+      - go test ./...
+
+  build:
+    desc: "Build the application binary for the current platform"
+    deps:
+      - vet
+    cmd: |
+      go build -ldflags "\
+        -X github.com/veerendra2/gopackages/version.Version={{.VERSION}} \
+        -X github.com/veerendra2/gopackages/version.Revision={{.REVISION}} \
+        -X github.com/veerendra2/gopackages/version.Branch={{.BRANCH}} \
+        -X github.com/veerendra2/gopackages/version.BuildUser={{.BUILD_USER}} \
+        -X github.com/veerendra2/gopackages/version.BuildDate={{.BUILD_TIME}}" \
+        -o dist/{{.APP_NAME}} {{.MAIN_FILE}}
+
+  build-platforms:
+    desc: "Build the application binaries for multiple platforms and architectures"
+    deps:
+      - vet
+    cmds:
+      - for:
+          matrix:
+            OS: ["linux", "darwin"]
+            ARCH: ["amd64", "arm64"]
+        cmd: |
+          GOOS={{.ITEM.OS}} GOARCH={{.ITEM.ARCH}} go build -ldflags "\
+            -X github.com/veerendra2/gopackages/version.Version={{.VERSION}} \
+            -X github.com/veerendra2/gopackages/version.Revision={{.REVISION}} \
+            -X github.com/veerendra2/gopackages/version.Branch={{.BRANCH}} \
+            -X github.com/veerendra2/gopackages/version.BuildUser={{.BUILD_USER}} \
+            -X github.com/veerendra2/gopackages/version.BuildDate={{.BUILD_TIME}}" \
+            -o dist/{{.APP_NAME}}-{{.ITEM.OS}}-{{.ITEM.ARCH}} {{.MAIN_FILE}}
