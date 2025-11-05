@@ -1,11 +1,6 @@
-# My Go Project Template
+# K8s AI Detective
 
-> Other references
->
-> - https://github.com/thockin/go-build-template/tree/master
-> - https://peter.bourgon.org/go-best-practices-2016/
-
-_\*Your app description here..._
+Receives alerts, runs kubectl-ai for debugging, summarizes, and sends reports to Slack.
 
 ## Build & Test
 
