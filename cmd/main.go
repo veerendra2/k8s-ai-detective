@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -15,12 +16,15 @@ import (
 	"github.com/veerendra2/gopackages/slogger"
 	"github.com/veerendra2/gopackages/version"
 	"github.com/veerendra2/k8s-ai-detective/internal/alertwebhook"
+	ai "github.com/veerendra2/k8s-ai-detective/pkg/kubectlai"
 )
 
 const AppName = "k8s-ai-detective"
 
 var cli struct {
 	Address string `env:"ADDRESS" default:":8080" help:"The address where the server should listen on."`
+
+	KubectlAi ai.Config `embed:""`
 
 	Log slogger.Config `embed:"" prefix:"log." envprefix:"LOG_"`
 }
@@ -37,6 +41,23 @@ func main() {
 
 	slog.Info("Version information", version.Info()...)
 	slog.Info("Build context", version.BuildContext()...)
+
+	aiClient, err := ai.NewClient(cli.KubectlAi)
+	if err != nil {
+		slog.Error("Failed to create AI client", "error", err)
+		kongCtx.Exit(1)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	// Verify AI is working, fail-fast in case we can't run kubectl-ai
+	res, err := aiClient.RunQuietPrompt(ctx, "Ping test — short reply only, no emojis")
+	if err != nil {
+		slog.Error("kubectl-ai test failed", "error", err)
+		kongCtx.Exit(1)
+	}
+	slog.Info("kubectl-ai is working...", "response", strings.TrimSpace(res))
 
 	// ------------------------ HTTP SERVER ------------------------
 	mux := http.NewServeMux()

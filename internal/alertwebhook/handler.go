@@ -14,7 +14,6 @@ func HandleAlerts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// More info on parsing json request body
 	// https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body
 	ct := r.Header.Get("Content-Type")
 	if ct != "" {

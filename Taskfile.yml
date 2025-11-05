@@ -31,6 +31,7 @@ tasks:
       - go run {{.MAIN_FILE}}
     env:
       LOG_FORMAT: console
+      LOG_LEVEL: debug
 
   fmt:
     desc: "Formats all Go source files"
