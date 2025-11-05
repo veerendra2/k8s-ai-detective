@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-// Server wraps the HTTP server and provides start/stop functionality.
 type Server struct {
 	httpServer *http.Server
 }

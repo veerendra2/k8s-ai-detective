@@ -43,3 +43,14 @@ _Install GoReleaser: [Installation Guide](https://goreleaser.com/install/)_
 goreleaser release --snapshot --clean
 ...
 ```
+
+## Further Development
+
+- [ ] Context logging with `slog`
+- [ ] Better de-duplication of alerts with `fingerprint` while processing
+- [ ] More options config
+  - [ ] Exclude/include specific alerts
+  - [ ] Dedicated prompt for specific alerts
+  - [ ] Exclude alert groups
+  - [ ] Exclude namespaces
+- [ ] Refactor `processor` package

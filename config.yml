@@ -1,0 +1,6 @@
+---
+include_alert_groups:
+  - kubernetes-apps
+
+include_namespace:
+  - monitoring

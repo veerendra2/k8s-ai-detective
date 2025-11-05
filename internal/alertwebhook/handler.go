@@ -38,4 +38,5 @@ func HandleAlerts(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	fmt.Println(msg)
+	// TODO Push the the alert from alerts array in for loop
 }

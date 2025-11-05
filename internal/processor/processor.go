@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"sync"
 
 	"github.com/slack-go/slack"
 	"github.com/veerendra2/k8s-ai-detective/internal/alertwebhook"
+	"github.com/veerendra2/k8s-ai-detective/internal/config"
 	"github.com/veerendra2/k8s-ai-detective/pkg/kubectlai"
 )
 
@@ -17,6 +19,8 @@ type Config struct {
 
 	SlackBotToken  string `name:"slack-bot-token" help:"Slack bot token for authentication." env:"SLACK_BOT_TOKEN" default:""`
 	SlackChannelId string `name:"slack-channel-id" help:"Slack channel ID to send notifications." env:"SLACK_CHANNEL_ID" default:""`
+
+	ConfigFilePath string `name:"config-file-path" help:"Config file path." env:"CONFIG_FILE_PATH" default:"./config.yml"`
 }
 
 // AlertQueue wraps alertmanager.Alert for future metadata (timestamps, retries, etc.)
@@ -41,6 +45,8 @@ type client struct {
 	slackChannelId string
 
 	aiClient kubectlai.Client
+
+	appConfig *config.Config
 }
 
 // Start launches the worker pool
@@ -55,8 +61,45 @@ func (c *client) Start(ctx context.Context) error {
 	return nil
 }
 
+// Shutdown gracefully stops workers
+func (c *client) Shutdown(ctx context.Context) {
+	if c.cancel != nil {
+		c.cancel()
+	}
+	close(c.queue)
+	done := make(chan struct{})
+	go func() {
+		c.wg.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-ctx.Done():
+	}
+}
+
 // Push adds a new alert to the queue
 func (c *client) Push(alert alertwebhook.Alert) error {
+	// Ensure "alertgroup" is a string and retrieve its value
+	alertGroup, ok := alert.Labels["alertgroup"].(string)
+	if !ok {
+		slog.Info("Discarding the alert: invalid or missing alertgroup")
+		return nil
+	}
+
+	// Ensure "namespace" is a string and retrieve its value
+	namespace, ok := alert.Labels["namespace"].(string)
+	if !ok {
+		slog.Info("Discarding the alert: invalid or missing namespace")
+		return nil
+	}
+
+	// Discard the alert if the namespace or alert group is not in the config
+	if !slices.Contains(c.appConfig.IncludeAlertGroups, alertGroup) || !slices.Contains(c.appConfig.IncludeNamespace, namespace) {
+		slog.Info("Discarding the alert: not included in config", "alertgroup", alertGroup, "namespace", namespace)
+		return nil
+	}
+
 	select {
 	case c.queue <- AlertQueue{Alert: alert}:
 		return nil
@@ -105,25 +148,13 @@ func (c *client) processAlert(ctx context.Context, alert alertwebhook.Alert, id 
 	slog.Info("Sent message to slack", "channel_id", respChannelId, "sent_timestamp", timestamp)
 }
 
-// Shutdown gracefully stops workers
-func (c *client) Shutdown(ctx context.Context) {
-	if c.cancel != nil {
-		c.cancel()
-	}
-	close(c.queue)
-	done := make(chan struct{})
-	go func() {
-		c.wg.Wait()
-		close(done)
-	}()
-	select {
-	case <-done:
-	case <-ctx.Done():
-	}
-}
-
 func NewClient(cfg Config, aiClient kubectlai.Client) (Client, error) {
 	slackClient := slack.New(cfg.SlackBotToken)
+
+	appCfg, err := config.LoadConfig(cfg.ConfigFilePath)
+	if err != nil {
+		return nil, err
+	}
 
 	return &client{
 		workerCount: cfg.WorkerCount,
@@ -133,5 +164,7 @@ func NewClient(cfg Config, aiClient kubectlai.Client) (Client, error) {
 		slackChannelId: cfg.SlackChannelId,
 
 		aiClient: aiClient,
+
+		appConfig: appCfg,
 	}, nil
 }

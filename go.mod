@@ -6,6 +6,7 @@ require (
 	github.com/alecthomas/kong v1.12.1
 	github.com/slack-go/slack v0.17.3
 	github.com/veerendra2/gopackages v1.2.2
+	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/client-go v0.34.1
 )
 

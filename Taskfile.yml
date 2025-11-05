@@ -3,9 +3,8 @@ version: "3"
 silent: true
 
 vars:
-  MAIN_FILE: cmd/main.go
-  APP_NAME:
-    sh: grep -i 'const appName' {{.MAIN_FILE}} | awk -F'"' '{print $2}'
+  MAIN_FILE: cmd/k8s-ai-detective/main.go
+  APP_NAME: k8s-ai-detective
   GOPATH_BIN:
     sh: echo "$(go env GOPATH)/bin"
   BRANCH:
@@ -21,6 +20,7 @@ vars:
 
 env:
   GOBIN: "{{.GOPATH_BIN }}"
+  CGO_ENABLED: 0
 
 tasks:
   run:
@@ -35,6 +35,8 @@ tasks:
 
   lint:
     desc: "Run static analysis and code linting using golangci-lint"
+    deps:
+      - install
     cmds:
       - golangci-lint run --timeout 3m
 
@@ -90,25 +92,31 @@ tasks:
 
   build-docker:
     desc: "Build Docker image"
-    deps:
-      - vet
     cmds:
       - docker build -t {{.APP_NAME}} .
 
   security:
     desc: "Run security vulnerability scan"
+    deps:
+      - install
     cmds:
-      - |
-        if command -v govulncheck >/dev/null 2>&1; then
-          govulncheck ./...
-        else
-          echo "govulncheck not found. Install with: go install golang.org/x/vuln/cmd/govulncheck@latest"
-        fi
+      - govulncheck ./...
+
+  install:
+    desc: "Install required tools and dependencies"
+    cmds:
+      - go install golang.org/x/vuln/cmd/govulncheck@latest
+      - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+    status:
+      - test -f govulncheck
+      - test -f golangci-lint
 
   all:
     desc: "Run comprehensive checks: format, lint, test, and build"
     cmds:
       - task fmt
       - task lint
+      - task vet
+      - task security
       - task test
       - task build

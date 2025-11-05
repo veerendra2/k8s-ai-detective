@@ -4,7 +4,6 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 RUN curl -sL https://taskfile.dev/install.sh | sh
-RUN ls -lah
 RUN /app/bin/task build
 
 # Build kubectl-ai, to make docker image multiarch
