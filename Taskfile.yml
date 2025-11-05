@@ -33,6 +33,11 @@ tasks:
       LOG_FORMAT: console
       LOG_LEVEL: debug
 
+  lint:
+    desc: "Run static analysis and code linting using golangci-lint"
+    cmds:
+      - golangci-lint run --timeout 3m
+
   fmt:
     desc: "Formats all Go source files"
     cmds:

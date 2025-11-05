@@ -90,7 +90,7 @@ func NewClient(config Config) (Client, error) {
 			return nil, err
 		}
 		if info.IsDir() {
-			return nil, fmt.Errorf("The kubeconfig file path should not be a directory")
+			return nil, fmt.Errorf("kubeconfig file path should not be a directory")
 		}
 
 		slog.Info("Using kubeconfig", "file", expandedPath)
@@ -100,14 +100,14 @@ func NewClient(config Config) (Client, error) {
 		// More Info: https://stackoverflow.com/a/73461820/2200798
 		restCfg, err := rest.InClusterConfig()
 		if err != nil {
-			return nil, fmt.Errorf("Error getting in-cluster config: %w", err)
+			return nil, fmt.Errorf("error getting in-cluster config: %w", err)
 		}
 
 		apiCfg := api.NewConfig()
 		apiCfg.Clusters["in-cluster"] = &api.Cluster{
 			Server:                   restCfg.Host,
-			CertificateAuthority:     restCfg.TLSClientConfig.CAFile,
-			CertificateAuthorityData: restCfg.TLSClientConfig.CAData,
+			CertificateAuthority:     restCfg.CAFile,
+			CertificateAuthorityData: restCfg.CAData,
 		}
 		apiCfg.AuthInfos["in-cluster-user"] = &api.AuthInfo{
 			Token: restCfg.BearerToken,
@@ -120,7 +120,7 @@ func NewClient(config Config) (Client, error) {
 
 		kubeconfigPath = filepath.Join(os.TempDir(), "incluster.kubeconfig")
 		if err := clientcmd.WriteToFile(*apiCfg, kubeconfigPath); err != nil {
-			return nil, fmt.Errorf("Error writing kubeconfig: %w", err)
+			return nil, fmt.Errorf("error writing kubeconfig: %w", err)
 		}
 
 		slog.Info("Created in-cluster kubeconfig", "file", kubeconfigPath)
