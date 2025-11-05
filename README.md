@@ -53,4 +53,4 @@ goreleaser release --snapshot --clean
   - [ ] Dedicated prompt for specific alerts
   - [ ] Exclude alert groups
   - [ ] Exclude namespaces
-- [ ] Refactor `processor` package
+- [ ] Metrics

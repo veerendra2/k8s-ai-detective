@@ -8,9 +8,9 @@ import (
 	"sync"
 
 	"github.com/slack-go/slack"
-	"github.com/veerendra2/k8s-ai-detective/internal/alertwebhook"
 	"github.com/veerendra2/k8s-ai-detective/internal/config"
 	"github.com/veerendra2/k8s-ai-detective/pkg/kubectlai"
+	"github.com/veerendra2/k8s-ai-detective/pkg/models"
 )
 
 type Config struct {
@@ -25,12 +25,12 @@ type Config struct {
 
 // AlertQueue wraps alertmanager.Alert for future metadata (timestamps, retries, etc.)
 type AlertQueue struct {
-	Alert alertwebhook.Alert
+	Alert models.Alert
 }
 
 type Client interface {
 	Start(ctx context.Context) error
-	Push(alert alertwebhook.Alert) error
+	Push(webhookMsg models.WebhookMessage) error
 	Shutdown(ctx context.Context)
 }
 
@@ -79,33 +79,36 @@ func (c *client) Shutdown(ctx context.Context) {
 }
 
 // Push adds a new alert to the queue
-func (c *client) Push(alert alertwebhook.Alert) error {
-	// Ensure "alertgroup" is a string and retrieve its value
-	alertGroup, ok := alert.Labels["alertgroup"].(string)
-	if !ok {
-		slog.Info("Discarding the alert: invalid or missing alertgroup")
-		return nil
+func (c *client) Push(webhookMsg models.WebhookMessage) error {
+	for _, alert := range webhookMsg.Alerts {
+		// Ensure "alertgroup" is a string and retrieve its value
+		alertGroup, ok := alert.Labels["alertgroup"].(string)
+		if !ok {
+			slog.Info("Discarding the alert: invalid or missing alertgroup")
+			continue
+		}
+
+		// Ensure "namespace" is a string and retrieve its value
+		namespace, ok := alert.Labels["namespace"].(string)
+		if !ok {
+			slog.Info("Discarding the alert: invalid or missing namespace")
+			continue
+		}
+
+		// Discard the alert if the namespace or alert group is not in the config
+		if !slices.Contains(c.appConfig.IncludeAlertGroups, alertGroup) || !slices.Contains(c.appConfig.IncludeNamespace, namespace) {
+			slog.Info("Discarding the alert: not included in config", "alertgroup", alertGroup, "namespace", namespace)
+			continue
+		}
+
+		select {
+		case c.queue <- AlertQueue{Alert: alert}:
+		default:
+			return fmt.Errorf("alert queue full")
+		}
 	}
 
-	// Ensure "namespace" is a string and retrieve its value
-	namespace, ok := alert.Labels["namespace"].(string)
-	if !ok {
-		slog.Info("Discarding the alert: invalid or missing namespace")
-		return nil
-	}
-
-	// Discard the alert if the namespace or alert group is not in the config
-	if !slices.Contains(c.appConfig.IncludeAlertGroups, alertGroup) || !slices.Contains(c.appConfig.IncludeNamespace, namespace) {
-		slog.Info("Discarding the alert: not included in config", "alertgroup", alertGroup, "namespace", namespace)
-		return nil
-	}
-
-	select {
-	case c.queue <- AlertQueue{Alert: alert}:
-		return nil
-	default:
-		return fmt.Errorf("alert queue full")
-	}
+	return nil
 }
 
 // worker processes alerts sequentially
@@ -124,7 +127,7 @@ func (c *client) worker(ctx context.Context, id int) {
 	}
 }
 
-func (c *client) processAlert(ctx context.Context, alert alertwebhook.Alert, id int) {
+func (c *client) processAlert(ctx context.Context, alert models.Alert, id int) {
 	// TODO set context timeout!
 	c.aiClient.RunQuietPrompt(ctx, "This is a test!")
 

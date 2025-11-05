@@ -1,4 +1,4 @@
-package alertwebhook
+package models
 
 import (
 	"time"

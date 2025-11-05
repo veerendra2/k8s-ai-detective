@@ -11,7 +11,6 @@ type Server struct {
 	httpServer *http.Server
 }
 
-// New creates a new Server instance.
 func New(addr string, handler http.Handler) *Server {
 	return &Server{
 		httpServer: &http.Server{
@@ -24,7 +23,6 @@ func New(addr string, handler http.Handler) *Server {
 	}
 }
 
-// Start begins listening for HTTP requests.
 func (s *Server) Start() {
 	go func() {
 		slog.Info("Starting HTTP server", "address", s.httpServer.Addr)
@@ -34,7 +32,6 @@ func (s *Server) Start() {
 	}()
 }
 
-// Stop gracefully shuts down the HTTP server.
 func (s *Server) Stop(ctx context.Context) error {
 	slog.Info("Shutting down HTTP server")
 	return s.httpServer.Shutdown(ctx)
