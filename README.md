@@ -1,6 +1,36 @@
 # K8s AI Detective
 
-Receives alerts, runs kubectl-ai for debugging, summarizes, and sends reports to Slack.
+K8s AI Detective is a tool designed to automate debugging and summarizing issues when an alert is triggered. It leverages [`kubectl-ai`](https://github.com/GoogleCloudPlatform/kubectl-ai) to analyze the alert context, gather relevant information (such as logs, events, and resource states), and generate an initial summary.
+
+> What is `kubectkl-ai`?
+> kubectl-ai acts as an intelligent interface, translating user intent into precise Kubernetes operations, making Kubernetes management more accessible and efficient.
+>
+> https://github.com/GoogleCloudPlatform/kubectl-ai
+
+## Usage
+
+```bash
+Usage: k8s-ai-detective --api-key=STRING [flags]
+
+K8s AI Detective automates debugging and summarizing alerts by leveraging `kubectl-ai` to analyze context, gather logs, events, and resource states, and generate an initial
+summary.
+
+Flags:
+  -h, --help                                   Show context-sensitive help.
+      --address=":8080"                        The address where the server should listen on ($ADDRESS).
+      --config-file-path="./config.yml"        Config file path ($CONFIG_FILE_PATH).
+      --llm-provider="gemini"                  Language model provider ($LLM_PROVIDER)
+      --llm-provider-model="gemini-2.5-pro"    LLM provider's model name ($LLM_PROVIDER_MODEL)
+      --api-key=STRING                         API key of the llm-provider you set for authentication ($API_KEY)
+      --kubeconfig=""                          Path to kubeconfig file (uses in-cluster config if not set) ($KUBECONFIG)
+      --worker-count=3                         Number of alerts processed in parallel (Max 256) ($WORKER_COUNT).
+      --alert-queue-size=10                    Queue size to hold alerts (Max 256) ($ALERT_QUEUE_SIZE).
+      --slack-bot-token=""                     Slack bot token for authentication ($SLACK_BOT_TOKEN).
+      --slack-channel-id=""                    Slack channel ID to send notifications ($SLACK_CHANNEL_ID).
+      --log.format="json"                      Set the output format of the logs. Must be "console" or "json" ($LOG_FORMAT).
+      --log.level=INFO                         Set the log level. Must be "DEBUG", "INFO", "WARN" or "ERROR" ($LOG_LEVEL).
+      --log.add-source                         Whether to add source file and line number to log records ($LOG_ADD_SOURCE).
+```
 
 ## How it Works?
 

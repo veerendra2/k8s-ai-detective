@@ -19,8 +19,6 @@ type Config struct {
 
 	SlackBotToken  string `name:"slack-bot-token" help:"Slack bot token for authentication." env:"SLACK_BOT_TOKEN" default:""`
 	SlackChannelId string `name:"slack-channel-id" help:"Slack channel ID to send notifications." env:"SLACK_CHANNEL_ID" default:""`
-
-	ConfigFilePath string `name:"config-file-path" help:"Config file path." env:"CONFIG_FILE_PATH" default:"./config.yml"`
 }
 
 // AlertQueue wraps alertmanager.Alert for future metadata (timestamps, retries, etc.)
@@ -46,7 +44,7 @@ type client struct {
 
 	aiClient kubectlai.Client
 
-	appConfig *config.Config
+	appConfig *config.AppConfig
 }
 
 // Start launches the worker pool
@@ -96,7 +94,7 @@ func (c *client) Push(webhookMsg models.WebhookMessage) error {
 		}
 
 		// Discard the alert if the namespace or alert group is not in the config
-		if !slices.Contains(c.appConfig.IncludeAlertGroups, alertGroup) || !slices.Contains(c.appConfig.IncludeNamespace, namespace) {
+		if !slices.Contains(c.appConfig.IncludeAlertGroups, alertGroup) && !slices.Contains(c.appConfig.IncludeNamespace, namespace) {
 			slog.Info("Discarding the alert: not included in config", "alertgroup", alertGroup, "namespace", namespace)
 			continue
 		}
@@ -151,13 +149,8 @@ func (c *client) processAlert(ctx context.Context, alert models.Alert, id int) {
 	slog.Info("Sent message to slack", "channel_id", respChannelId, "sent_timestamp", timestamp)
 }
 
-func NewClient(cfg Config, aiClient kubectlai.Client) (Client, error) {
+func NewClient(cfg Config, aiClient kubectlai.Client, appCfg *config.AppConfig) (Client, error) {
 	slackClient := slack.New(cfg.SlackBotToken)
-
-	appCfg, err := config.LoadConfig(cfg.ConfigFilePath)
-	if err != nil {
-		return nil, err
-	}
 
 	return &client{
 		workerCount: cfg.WorkerCount,

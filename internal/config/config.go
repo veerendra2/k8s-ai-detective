@@ -3,26 +3,33 @@ package config
 import (
 	"os"
 
+	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v3"
 )
 
-type Config struct {
-	IncludeAlertGroups []string `yaml:"include_alert_groups"`
-	IncludeNamespace   []string `yaml:"include_namespace"`
+type AppConfig struct {
+	IncludeAlertGroups []string `yaml:"include_alert_groups" validate:"required_without=IncludeNamespace,min=1"`
+	IncludeNamespace   []string `yaml:"include_namespace" validate:"required_without=IncludeAlertGroups,min=1"`
 }
 
-func LoadConfig(filePath string) (*Config, error) {
-	file, err := os.Open(filePath)
+// LoadConfig loads and validates the configuration from the given YAML file.
+func LoadConfig(filePath string) (*AppConfig, error) {
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
 
-	var cfg Config
-	decoder := yaml.NewDecoder(file)
-	if err := decoder.Decode(&cfg); err != nil {
+	config := &AppConfig{}
+	err = yaml.Unmarshal(data, config)
+	if err != nil {
 		return nil, err
 	}
 
-	return &cfg, nil
+	// Validate the configuration
+	validate := validator.New()
+	if err := validate.Struct(config); err != nil {
+		return nil, err
+	}
+
+	return config, nil
 }

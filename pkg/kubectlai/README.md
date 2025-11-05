@@ -1,6 +1,6 @@
-# kubectl-ai
+# kubectlai
 
-> https://github.com/GoogleCloudPlatform/kubectl-ai
+A wrapper package for running the [kubectl-ai](https://github.com/GoogleCloudPlatform/kubectl-ai) command-line tool. `kubectl-ai` enables natural language interaction with Kubernetes clusters, leveraging large language models to translate user intent into `kubectl` commands. See the help section
 
 ```bash
 kubectl-ai --help
