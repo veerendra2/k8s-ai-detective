@@ -4,6 +4,7 @@ go 1.25.3
 
 require (
 	github.com/alecthomas/kong v1.12.1
+	github.com/slack-go/slack v0.17.3
 	github.com/veerendra2/gopackages v1.2.2
 	k8s.io/client-go v0.34.1
 )
@@ -13,6 +14,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect

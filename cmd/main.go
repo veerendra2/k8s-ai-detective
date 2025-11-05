@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -16,6 +14,8 @@ import (
 	"github.com/veerendra2/gopackages/slogger"
 	"github.com/veerendra2/gopackages/version"
 	"github.com/veerendra2/k8s-ai-detective/internal/alertwebhook"
+	"github.com/veerendra2/k8s-ai-detective/internal/processor"
+	"github.com/veerendra2/k8s-ai-detective/pkg/httpserver"
 	ai "github.com/veerendra2/k8s-ai-detective/pkg/kubectlai"
 )
 
@@ -25,6 +25,8 @@ var cli struct {
 	Address string `env:"ADDRESS" default:":8080" help:"The address where the server should listen on."`
 
 	KubectlAi ai.Config `embed:""`
+
+	Processor processor.Config `embed:""`
 
 	Log slogger.Config `embed:"" prefix:"log." envprefix:"LOG_"`
 }
@@ -42,16 +44,16 @@ func main() {
 	slog.Info("Version information", version.Info()...)
 	slog.Info("Build context", version.BuildContext()...)
 
+	// Initialize AI client
 	aiClient, err := ai.NewClient(cli.KubectlAi)
 	if err != nil {
 		slog.Error("Failed to create AI client", "error", err)
 		kongCtx.Exit(1)
 	}
 
+	// Verify AI client is working
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-
-	// Verify AI is working, fail-fast in case we can't run kubectl-ai
 	res, err := aiClient.RunQuietPrompt(ctx, "Ping test — short reply only, no emojis")
 	if err != nil {
 		slog.Error("kubectl-ai test failed", "error", err)
@@ -59,26 +61,29 @@ func main() {
 	}
 	slog.Info("kubectl-ai is working...", "response", strings.TrimSpace(res))
 
-	// ------------------------ HTTP SERVER ------------------------
-	mux := http.NewServeMux()
-	mux.HandleFunc("/alert", alertwebhook.HandleAlerts)
-
-	server := &http.Server{
-		Addr:         cli.Address,
-		Handler:      mux,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  30 * time.Second,
+	// Initialize processor
+	processorClient, err := processor.NewClient(cli.Processor, aiClient)
+	if err != nil {
+		slog.Error("Failed to create processor client", "error", err)
+		kongCtx.Exit(1)
 	}
 
-	go func() {
-		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			slog.Error("Server died unexpected.", slog.Any("error", err))
-		}
-		slog.Error("Server stopped.")
-	}()
-	// ------------------------------------------------------
+	// Start processor
+	if err := processorClient.Start(ctx); err != nil {
+		slog.Error("Failed to start processor", "error", err)
+		kongCtx.Exit(1)
+	}
+	slog.Info("Processor started")
 
+	// Initialize HTTP server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/alert", alertwebhook.HandleAlerts)
+	httpServer := httpserver.New(cli.Address, mux)
+
+	// Start HTTP server
+	httpServer.Start()
+
+	// Graceful shutdown handling
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
 
@@ -86,12 +91,20 @@ func main() {
 	<-done
 	slog.Info("Shutdown started.")
 
-	sdCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	// Shutdown all components
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
 
-	if err := server.Shutdown(sdCtx); err != nil {
-		log.Fatalf("HTTP shutdown error: %v", err)
+	// Shutdown HTTP server
+	if err := httpServer.Stop(shutdownCtx); err != nil {
+		slog.Error("HTTP server shutdown error", "error", err)
+	} else {
+		slog.Info("HTTP server shutdown complete")
 	}
+
+	// Shutdown processor
+	processorClient.Shutdown(shutdownCtx)
+	slog.Info("Processor shutdown complete")
 
 	slog.Info("Shutdown done.")
 }

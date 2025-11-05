@@ -2,6 +2,10 @@
 
 Receives alerts, runs kubectl-ai for debugging, summarizes, and sends reports to Slack.
 
+## How it Works?
+
+![Diagram](./assets/workflow.png)
+
 ## Build & Test
 
 - Using [Taskfile](https://taskfile.dev/)
