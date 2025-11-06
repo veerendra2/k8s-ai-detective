@@ -37,15 +37,16 @@ func (c *client) RunQuietPrompt(ctx context.Context, prompt string) (string, err
 	cmd := exec.CommandContext(ctx,
 		"kubectl-ai",
 		"--quiet",
+		"--skip-permissions",
 		"--llm-provider", c.llmProvider,
 		"--model", c.llmProviderModel,
 		"--kubeconfig", c.kubeconfigPath,
-		fmt.Sprintf(`'%s'`, prompt),
+		prompt,
 	)
 
 	// Create minimal environment
 	cmd.Env = []string{
-		"PATH=/bin",
+		"PATH=/usr/local/bin:/usr/bin:/bin",
 		"HOME=/tmp",
 		fmt.Sprintf("%s_API_KEY=%s", strings.ToUpper(c.llmProvider), c.apiKey),
 		"KUBECONFIG=" + c.kubeconfigPath,
@@ -66,7 +67,6 @@ func (c *client) RunQuietPrompt(ctx context.Context, prompt string) (string, err
 		return "", fmt.Errorf("kubectl-ai failed: %w", err)
 	}
 
-	//fmt.Println(out.String())
 	return out.String(), nil
 }
 
@@ -95,9 +95,11 @@ func NewClient(config Config) (Client, error) {
 
 		slog.Info("Using kubeconfig", "file", expandedPath)
 		kubeconfigPath = expandedPath
+
 	} else {
 		// Else, create kubeconfig file from in-cluster kubeconfig
 		// More Info: https://stackoverflow.com/a/73461820/2200798
+		// Because, kubectl-ai binary only accepts kubeconfig file
 		restCfg, err := rest.InClusterConfig()
 		if err != nil {
 			return nil, fmt.Errorf("error getting in-cluster config: %w", err)
@@ -118,7 +120,8 @@ func NewClient(config Config) (Client, error) {
 		}
 		apiCfg.CurrentContext = "in-cluster-context"
 
-		kubeconfigPath = filepath.Join(os.TempDir(), "incluster.kubeconfig")
+		// NOTE: This '/cache' dir can be mounted as emptyDir volume in the pod
+		kubeconfigPath = filepath.Join("/cache", "incluster.kubeconfig")
 		if err := clientcmd.WriteToFile(*apiCfg, kubeconfigPath); err != nil {
 			return nil, fmt.Errorf("error writing kubeconfig: %w", err)
 		}
@@ -132,5 +135,4 @@ func NewClient(config Config) (Client, error) {
 		llmProviderModel: config.LlmProviderModel,
 		apiKey:           config.APIKey,
 	}, nil
-
 }

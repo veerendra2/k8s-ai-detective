@@ -62,7 +62,7 @@ func main() {
 	}
 
 	// Verify AI client is working
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 	res, err := aiClient.RunQuietPrompt(ctx, "Ping test — short reply only, no emojis")
 	if err != nil {
@@ -87,8 +87,8 @@ func main() {
 	// Initialize HTTP server
 	mux := http.NewServeMux()
 	alertHandler := alertwebhook.NewHandler(processorClient)
-	http.HandleFunc("/alert", alertHandler.AlertsHandler)
-	http.HandleFunc("/health", alertwebhook.HealthHandler)
+	mux.HandleFunc("/alert", alertHandler.AlertsHandler)
+	mux.HandleFunc("/health", alertwebhook.HealthHandler)
 	httpServer := httpserver.New(cli.Address, mux)
 
 	// Start HTTP server

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log/slog"
 
@@ -41,10 +42,12 @@ func (c *client) processAlert(ctx context.Context, alert models.Alert, id int) {
 		return
 	}
 
-	// Load the prompt template
-	tmpl, err := template.ParseFiles("templates/prompt.tmpl")
+	fmt.Println(string(alertJSON))
+
+	// Parse the prompt template from constants
+	tmpl, err := template.New("prompt").Parse(promptTpl1) // Using promptTpl2 from prompts.go
 	if err != nil {
-		slog.Error("Failed to load prompt template", "worker_id", id, "error", err)
+		slog.Error("Failed to parse prompt template", "worker_id", id, "error", err)
 		return
 	}
 
@@ -65,6 +68,8 @@ func (c *client) processAlert(ctx context.Context, alert models.Alert, id int) {
 		slog.Error("Failed to run AI prompt", "worker_id", id, "error", err)
 		return
 	}
+
+	fmt.Println(output)
 
 	// Send the output to the Slack channel
 	attachment := slack.Attachment{
