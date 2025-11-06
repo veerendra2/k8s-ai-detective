@@ -46,11 +46,12 @@ _Install Taskfile: [Installation Guide](https://taskfile.dev/docs/installation)_
 # List available tasks
 task --list
 task: Available tasks for this project:
-* all:                   Run comprehensive checks: format, lint, test, and build
+* all:                   Run comprehensive checks: format, lint, security and test
 * build:                 Build the application binary for the current platform
 * build-docker:          Build Docker image
 * build-platforms:       Build the application binaries for multiple platforms and architectures
 * fmt:                   Formats all Go source files
+* install:               Install required tools and dependencies
 * lint:                  Run static analysis and code linting using golangci-lint
 * run:                   Runs the main application
 * security:              Run security vulnerability scan

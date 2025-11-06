@@ -19,7 +19,7 @@ func NewHandler(processor processor.Client) *Handler {
 }
 
 // HandleAlerts processes Alertmanager webhook POSTs
-func (h *Handler) HandleAlerts(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) AlertsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -51,5 +51,18 @@ func (h *Handler) HandleAlerts(w http.ResponseWriter, r *http.Request) {
 	slog.Debug("Received webhook message", "alert", msg)
 	if err := h.Processor.Push(msg); err != nil {
 		slog.Error("Failed to push the alerts to queue", "error", err)
+	}
+}
+
+// HealthHandler returns the health status of the service
+func HealthHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte(`{"status":"ok"}`)); err != nil {
+		slog.Error("Failed to write response", "error", err)
 	}
 }

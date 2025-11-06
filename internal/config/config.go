@@ -12,7 +12,6 @@ type AppConfig struct {
 	IncludeNamespace   []string `yaml:"include_namespace" validate:"required_without=IncludeAlertGroups,min=1"`
 }
 
-// LoadConfig loads and validates the configuration from the given YAML file.
 func LoadConfig(filePath string) (*AppConfig, error) {
 	data, err := os.ReadFile(filePath)
 	if err != nil {

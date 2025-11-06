@@ -109,46 +109,6 @@ func (c *client) Push(webhookMsg models.WebhookMessage) error {
 	return nil
 }
 
-// worker processes alerts sequentially
-func (c *client) worker(ctx context.Context, id int) {
-	defer c.wg.Done()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case item, ok := <-c.queue:
-			if !ok {
-				return
-			}
-			c.processAlert(ctx, item.Alert, id)
-		}
-	}
-}
-
-func (c *client) processAlert(ctx context.Context, alert models.Alert, id int) {
-	// TODO set context timeout!
-	c.aiClient.RunQuietPrompt(ctx, "This is a test!")
-
-	// Send Message to slack channel
-	// Example: https://github.com/slack-go/slack/blob/master/examples/messages/messages.go
-	attachment := slack.Attachment{
-		Pretext: "some pretext",
-		Text:    "some text",
-	}
-
-	respChannelId, timestamp, err := c.slackClient.PostMessage(
-		c.slackChannelId,
-		slack.MsgOptionText("Some text", false),
-		slack.MsgOptionAttachments(attachment),
-	)
-	if err != nil {
-		slog.Error("Failed to set message to slack", any(err))
-		return
-	}
-
-	slog.Info("Sent message to slack", "channel_id", respChannelId, "sent_timestamp", timestamp)
-}
-
 func NewClient(cfg Config, aiClient kubectlai.Client, appCfg *config.AppConfig) (Client, error) {
 	slackClient := slack.New(cfg.SlackBotToken)
 

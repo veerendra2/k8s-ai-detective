@@ -112,11 +112,10 @@ tasks:
       - test -f golangci-lint
 
   all:
-    desc: "Run comprehensive checks: format, lint, test, and build"
+    desc: "Run comprehensive checks: format, lint, security and test"
     cmds:
       - task fmt
       - task lint
       - task vet
       - task security
       - task test
-      - task build

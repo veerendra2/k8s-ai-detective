@@ -87,7 +87,8 @@ func main() {
 	// Initialize HTTP server
 	mux := http.NewServeMux()
 	alertHandler := alertwebhook.NewHandler(processorClient)
-	http.HandleFunc("/alert", alertHandler.HandleAlerts)
+	http.HandleFunc("/alert", alertHandler.AlertsHandler)
+	http.HandleFunc("/health", alertwebhook.HealthHandler)
 	httpServer := httpserver.New(cli.Address, mux)
 
 	// Start HTTP server
