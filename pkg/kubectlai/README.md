@@ -1,6 +1,8 @@
 # kubectlai
 
-A wrapper package for running the [kubectl-ai](https://github.com/GoogleCloudPlatform/kubectl-ai) command-line tool. `kubectl-ai` enables natural language interaction with Kubernetes clusters, leveraging large language models to translate user intent into `kubectl` commands. See the help section
+> _I did an initial experiment on how to use `kubectl-ai` natively in Go (see [here](https://gist.github.com/veerendra2/160533bfce722cf3d853bf500bc8f407) for example). However, for now, this tool executes shell commands and retrieves the output._
+
+A wrapper package for running the [kubectl-ai](https://github.com/GoogleCloudPlatform/kubectl-ai) command-line tool. `kubectl-ai` enables natural language interaction with Kubernetes clusters, leveraging large language models to translate user intent into `kubectl` commands. See the help below
 
 ```bash
 kubectl-ai --help

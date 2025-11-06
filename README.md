@@ -1,19 +1,19 @@
 # K8s AI Detective
 
+> ⚠️ _\*CAUTION: This tool was created out of curiosity during a hackathon. It hasn’t been thoroughly tested and still requires improvements. **DO NOT use it on production clusters!**_
+
 K8s AI Detective is a tool designed to automate debugging and summarizing issues when an alert is triggered. It leverages [`kubectl-ai`](https://github.com/GoogleCloudPlatform/kubectl-ai) to analyze the alert context, gather relevant information (such as logs, events, and resource states), and generate an initial summary.
 
-> What is `kubectkl-ai`?
-> kubectl-ai acts as an intelligent interface, translating user intent into precise Kubernetes operations, making Kubernetes management more accessible and efficient.
->
-> https://github.com/GoogleCloudPlatform/kubectl-ai
+<center>
+  <img src="./assets/logo.png" alt="PiHole" width="100"/>
+</center>
 
 ## Usage
 
 ```bash
 Usage: k8s-ai-detective --api-key=STRING [flags]
 
-K8s AI Detective automates debugging and summarizing alerts by leveraging `kubectl-ai` to analyze context, gather logs, events, and resource states, and generate an initial
-summary.
+K8s AI Detective automates debugging and summarizing alerts by leveraging `kubectl-ai` to analyze context, gather logs, events, and resource states, and generate an initial summary.
 
 Flags:
   -h, --help                                   Show context-sensitive help.
@@ -77,11 +77,11 @@ goreleaser release --snapshot --clean
 
 ## Further Development
 
-- [ ] Context logging with `slog`
-- [ ] Better de-duplication of alerts with `fingerprint` while processing
-- [ ] More options config
-  - [ ] Exclude/include specific alerts
-  - [ ] Dedicated prompt for specific alerts
-  - [ ] Exclude alert groups
-  - [ ] Exclude namespaces
-- [ ] Metrics
+- [ ] Add contextual logging using `slog`
+- [ ] Improve alert de-duplication with `fingerprint` during processing
+- [ ] Expand configuration options
+  - [ ] Support excluding or including specific alerts
+  - [ ] Allow dedicated prompts for selected alerts
+  - [ ] Enable exclusion of alert groups
+  - [ ] Support excluding specific namespaces
+- [ ] Add metrics collection and reporting

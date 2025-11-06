@@ -47,7 +47,7 @@ type client struct {
 	appConfig *config.AppConfig
 }
 
-// Start launches the worker pool
+// Start worker pool
 func (c *client) Start(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	c.cancel = cancel
@@ -59,7 +59,7 @@ func (c *client) Start(ctx context.Context) error {
 	return nil
 }
 
-// Shutdown gracefully stops workers
+// Shutdown workers
 func (c *client) Shutdown(ctx context.Context) {
 	if c.cancel != nil {
 		c.cancel()
@@ -76,7 +76,7 @@ func (c *client) Shutdown(ctx context.Context) {
 	}
 }
 
-// Push adds a new alert to the queue
+// Pushes a new alert to the queue
 func (c *client) Push(webhookMsg models.WebhookMessage) error {
 	for _, alert := range webhookMsg.Alerts {
 		// Ensure "alertgroup" is a string and retrieve its value

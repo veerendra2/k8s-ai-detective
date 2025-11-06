@@ -1,0 +1,13 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: k8s-ai-detective-clusterrolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: k8s-ai-detective-clusterrole
+subjects:
+  - kind: ServiceAccount
+    name: k8s-ai-detective-sa
+    namespace: k8s-ai-detective

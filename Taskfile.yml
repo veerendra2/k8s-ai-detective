@@ -31,7 +31,6 @@ tasks:
       - go run {{.MAIN_FILE}}
     env:
       LOG_FORMAT: console
-      LOG_LEVEL: debug
 
   lint:
     desc: "Run static analysis and code linting using golangci-lint"

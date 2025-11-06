@@ -1,0 +1,87 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-ai-detective
+  namespace: k8s-ai-detective
+  labels:
+    app: k8s-ai-detective
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8s-ai-detective
+  template:
+    metadata:
+      labels:
+        app: k8s-ai-detective
+    spec:
+      containers:
+        - name: k8s-ai-detective
+          env:
+            - name: LLM_PROVIDER
+              value: "gemini"
+            - name: LLM_PROVIDER_MODEL
+              value: "gemini-2.5-pro"
+            - name: WORKER_COUNT
+              value: "10"
+            - name: ALERT_QUEUE_SIZE
+              value: "50"
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: k8s-ai-detective-secrets
+                  key: API_KEY
+            - name: SLACK_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: k8s-ai-detective-secrets
+                  key: SLACK_BOT_TOKEN
+            - name: SLACK_CHANNEL_ID
+              valueFrom:
+                secretKeyRef:
+                  name: k8s-ai-detective-secrets
+                  key: SLACK_CHANNEL_ID
+          image: ghcr.io/veerendra2/k8s-ai-detective:latest
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http-health
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 65533
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config
+              readOnly: true
+            - name: cache-volume
+              mountPath: /cache
+      volumes:
+        - name: config-volume
+          configMap:
+            name: k8s-ai-detective-config
+        - name: cache-volume
+          emptyDir:
+            medium: ""
+            sizeLimit: 10Mi
+      serviceAccountName: k8s-ai-detective-sa
+      terminationGracePeriodSeconds: 10
