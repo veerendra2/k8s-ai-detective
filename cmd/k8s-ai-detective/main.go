@@ -79,7 +79,7 @@ func main() {
 	}
 
 	// Start processor
-	if err := processorClient.Start(ctx); err != nil {
+	if err := processorClient.Start(context.Background()); err != nil {
 		slog.Error("Failed to start processor", "error", err)
 		kongCtx.Exit(1)
 	}
