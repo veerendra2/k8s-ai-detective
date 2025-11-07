@@ -1,9 +1,9 @@
 FROM golang:1.25.3 AS app_builder
 WORKDIR /app
+RUN curl -sL https://taskfile.dev/install.sh | sh
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN curl -sL https://taskfile.dev/install.sh | sh
 RUN /app/bin/task build
 
 # Build kubectl-ai and install kubectl via apt-get to make these

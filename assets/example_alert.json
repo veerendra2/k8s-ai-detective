@@ -1,0 +1,88 @@
+{
+  "receiver": "all-alerts",
+  "status": "firing",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertgroup": "kubernetes-apps",
+        "alertname": "KubeCronJobRunning",
+        "container": "kube-state-metrics",
+        "cronjob": "lakekeeper-migrate",
+        "endpoint": "http",
+        "instance": "10.244.10.246:8080",
+        "job": "kube-state-metrics",
+        "namespace": "iceberg",
+        "pod": "kube-state-metrics-5cb6697d54-ztg2w",
+        "prometheus": "monitoring/vmagent",
+        "service": "kube-state-metrics",
+        "severity": "warning",
+        "staffbase_cluster": "de1",
+        "staffbase_env": "dev"
+      },
+      "annotations": {
+        "message": "CronJob iceberg/lakekeeper-migrate is taking more than 5h to complete.",
+        "runbook": "Check the status and the logs of the cronjob using the Kubernetes dashboard for further information.\nAlso take a look at the instructions under **KubeJobFailed**.\n"
+      },
+      "startsAt": "2025-10-29T15:20:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://vmalert-vmalert-857f556694-8skb2:8080/vmalert/alert?group_id=18162710346169213707&alert_id=17027533445832755558",
+      "fingerprint": "a57e47fb0a3369f6"
+    },
+    {
+      "status": "firing",
+      "labels": {
+        "alertgroup": "kubernetes-apps",
+        "alertname": "KubeCronJobRunning",
+        "container": "kube-state-metrics",
+        "cronjob": "openfga-migrate",
+        "endpoint": "http",
+        "instance": "10.244.10.246:8080",
+        "job": "kube-state-metrics",
+        "namespace": "iceberg",
+        "pod": "kube-state-metrics-5cb6697d54-ztg2w",
+        "prometheus": "monitoring/vmagent",
+        "service": "kube-state-metrics",
+        "severity": "warning",
+        "staffbase_cluster": "de1",
+        "staffbase_env": "dev"
+      },
+      "annotations": {
+        "message": "CronJob iceberg/openfga-migrate is taking more than 5h to complete.",
+        "runbook": "Check the status and the logs of the cronjob using the Kubernetes dashboard for further information.\nAlso take a look at the instructions under **KubeJobFailed**.\n"
+      },
+      "startsAt": "2025-10-29T15:20:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://vmalert-vmalert-857f556694-8skb2:8080/vmalert/alert?group_id=18162710346169213707&alert_id=15166849001192568795",
+      "fingerprint": "cd1e478631b4a463"
+    }
+  ],
+  "groupLabels": {
+    "alertname": "KubeCronJobRunning",
+    "namespace": "iceberg",
+    "staffbase_cluster": "de1",
+    "staffbase_env": "dev"
+  },
+  "commonLabels": {
+    "alertgroup": "kubernetes-apps",
+    "alertname": "KubeCronJobRunning",
+    "container": "kube-state-metrics",
+    "endpoint": "http",
+    "instance": "10.244.10.246:8080",
+    "job": "kube-state-metrics",
+    "namespace": "iceberg",
+    "pod": "kube-state-metrics-5cb6697d54-ztg2w",
+    "prometheus": "monitoring/vmagent",
+    "service": "kube-state-metrics",
+    "severity": "warning",
+    "staffbase_cluster": "de1",
+    "staffbase_env": "dev"
+  },
+  "commonAnnotations": {
+    "runbook": "Check the status and the logs of the cronjob using the Kubernetes dashboard for further information.\nAlso take a look at the instructions under **KubeJobFailed**.\n"
+  },
+  "externalURL": "http://vmalertmanager-vmalertmanager-0:9093",
+  "version": "4",
+  "groupKey": "{}:{alertname=\"KubeCronJobRunning\", namespace=\"iceberg\", staffbase_cluster=\"de1\", staffbase_env=\"dev\"}",
+  "truncatedAlerts": 0
+}

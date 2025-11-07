@@ -1,11 +1,11 @@
 # K8s AI Detective
 
-> ⚠️ _\*CAUTION: This tool was created out of curiosity during a hackathon. It hasn’t been thoroughly tested and still requires improvements. **DO NOT use it on production clusters!**_
+> ⚠️ _\*CAUTION: This tool was created out of curiosity during a hackathon. It hasn’t been thoroughly tested and still requires improvements._
 
 K8s AI Detective is a tool designed to automate debugging and summarizing issues when an alert is triggered. It leverages [`kubectl-ai`](https://github.com/GoogleCloudPlatform/kubectl-ai) to analyze the alert context, gather relevant information (such as logs, events, and resource states), and generate an initial summary.
 
 <center>
-  <img src="./assets/logo.png" alt="PiHole" width="100"/>
+  <img src="./assets/logo.png" alt="logo" width="90"/>
 </center>
 
 ## Usage
@@ -35,6 +35,46 @@ Flags:
 ## How it Works?
 
 ![Diagram](./assets/workflow.png)
+
+## Run Locally
+
+1. Start the server
+
+```bash
+# Export envs
+export API_KEY="REDACTED"
+export KUBECONFIG="~/.kube/config"
+export SLACK_BOT_TOKEN="REDACTED"
+export SLACK_CHANNEL_ID="REDACTED"
+
+# Run app locally
+task run
+time=2025-11-06T19:09:05+01:00 level=INFO source=/k8s-ai-detective/cmd/k8s-ai-detective/main.go:47 msg="Version information" version="" branch="" revision=""
+time=2025-11-06T19:09:05+01:00 level=INFO source=/k8s-ai-detective/cmd/k8s-ai-detective/main.go:48 msg="Build context" go_version=go1.25.3 user="" date=""
+time=2025-11-06T19:09:05+01:00 level=INFO source=/k8s-ai-detective/pkg/kubectlai/kubectlai.go:96 msg="Using kubeconfig" file=/Users/veerendra.kakumanu/.kube/config
+time=2025-11-06T19:09:08+01:00 level=INFO source=/k8s-ai-detective/cmd/k8s-ai-detective/main.go:72 msg="kubectl-ai is working..." response=pong
+time=2025-11-06T19:09:08+01:00 level=INFO source=/k8s-ai-detective/pkg/httpserver/httpserver.go:28 msg="Starting HTTP server" address=:8080
+```
+
+2. Send an example alert using `curl`
+
+```bash
+curl -X POST -H "Content-Type: application/json" -d @assets/example_alert.json http://localhost:8080/alert
+```
+
+3. It should able to send summarized info to the slack channel
+
+## Alertmanager Config
+
+Configure alertmanager to send alerts to `k8s-ai-detective` like below
+
+```yaml
+receivers:
+  - name: "all-alerts"
+    webhook_configs:
+      - url: "https://k8s-ai-detective/alert"
+        send_resolved: true
+```
 
 ## Build & Test
 
