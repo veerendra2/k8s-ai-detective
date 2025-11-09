@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/slack-go/slack"
 	"github.com/veerendra2/k8s-ai-detective/internal/config"
@@ -14,8 +15,9 @@ import (
 )
 
 type Config struct {
-	WorkerCount    uint8 `name:"worker-count" help:"Number of alerts processed in parallel (Max 256)." env:"WORKER_COUNT" default:"3"`
-	AlertQueueSize uint8 `name:"alert-queue-size" help:"Queue size to hold alerts (Max 256)." env:"ALERT_QUEUE_SIZE" default:"10"`
+	AlertQueueSize uint8         `name:"alert-queue-size" help:"Queue size to hold alerts (Max 256)." env:"ALERT_QUEUE_SIZE" default:"10"`
+	WorkerCount    uint8         `name:"worker-count" help:"Number of alerts processed in parallel (Max 256)." env:"WORKER_COUNT" default:"3"`
+	WorkerTimeout  time.Duration `name:"worker-timeout" help:"Timeout for processing each alert in the worker." env:"WORKER_TIMEOUT" default:"120s"`
 
 	SlackBotToken  string `name:"slack-bot-token" help:"Slack bot token for authentication." env:"SLACK_BOT_TOKEN" default:""`
 	SlackChannelId string `name:"slack-channel-id" help:"Slack channel ID to send notifications." env:"SLACK_CHANNEL_ID" default:""`
@@ -33,7 +35,8 @@ type Client interface {
 }
 
 type client struct {
-	workerCount uint8
+	workerCount   uint8
+	workerTimeout time.Duration
 
 	queue  chan AlertQueue
 	wg     sync.WaitGroup
@@ -54,6 +57,7 @@ func (c *client) Start(ctx context.Context) error {
 
 	for i := 0; i < int(c.workerCount); i++ {
 		c.wg.Add(1)
+		slog.Info("Starting worker...", "worker_id", i)
 		go c.worker(ctx, i)
 	}
 	return nil
@@ -113,8 +117,9 @@ func NewClient(cfg Config, aiClient kubectlai.Client, appCfg *config.AppConfig) 
 	slackClient := slack.New(cfg.SlackBotToken)
 
 	return &client{
-		workerCount: cfg.WorkerCount,
-		queue:       make(chan AlertQueue, cfg.AlertQueueSize),
+		workerCount:   cfg.WorkerCount,
+		workerTimeout: cfg.WorkerTimeout,
+		queue:         make(chan AlertQueue, cfg.AlertQueueSize),
 
 		slackClient:    slackClient,
 		slackChannelId: cfg.SlackChannelId,

@@ -27,12 +27,18 @@ func (c *client) worker(ctx context.Context, id int) {
 	for {
 		select {
 		case <-ctx.Done():
+			slog.Info("Worker shutting down", "worker_id", id)
 			return
 		case item, ok := <-c.queue:
 			if !ok {
+				slog.Info("Alert queue closed, worker exiting", "worker_id", id)
 				return
 			}
-			c.processAlert(ctx, item.Alert, id)
+
+			// Ensure alert processing completes within the specified timeout
+			workerCtx, cancel := context.WithTimeout(ctx, c.workerTimeout)
+			c.processAlert(workerCtx, item.Alert, id)
+			cancel()
 		}
 	}
 }

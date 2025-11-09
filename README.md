@@ -53,13 +53,13 @@ time=2025-11-06T19:09:05+01:00 level=INFO source=/k8s-ai-detective/cmd/k8s-ai-de
 time=2025-11-06T19:09:05+01:00 level=INFO source=/k8s-ai-detective/cmd/k8s-ai-detective/main.go:48 msg="Build context" go_version=go1.25.3 user="" date=""
 time=2025-11-06T19:09:05+01:00 level=INFO source=/k8s-ai-detective/pkg/kubectlai/kubectlai.go:96 msg="Using kubeconfig" file=/Users/veerendra.kakumanu/.kube/config
 time=2025-11-06T19:09:08+01:00 level=INFO source=/k8s-ai-detective/cmd/k8s-ai-detective/main.go:72 msg="kubectl-ai is working..." response=pong
-time=2025-11-06T19:09:08+01:00 level=INFO source=/k8s-ai-detective/pkg/httpserver/httpserver.go:28 msg="Starting HTTP server" address=:8080
+time=2025-11-06T19:09:08+01:00 level=INFO source=/k8s-ai-detective/pkg/httpserver/httpserver.go:28 msg="Starting HTTP server" address=:8085
 ```
 
 2. Send an example alert using `curl`
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d @assets/example_alert.json http://localhost:8080/alert
+curl -X POST -H "Content-Type: application/json" -d @assets/example_alert.json http://localhost:8085/alert
 ```
 
 3. It should able to send summarized info to the slack channel
@@ -125,3 +125,13 @@ goreleaser release --snapshot --clean
   - [ ] Enable exclusion of alert groups
   - [ ] Support excluding specific namespaces
 - [ ] Add metrics collection and reporting
+
+## References
+
+- [kubectl-ai](https://github.com/GoogleCloudPlatform/kubectl-ai)
+- [Understanding the context package in golang](https://medium.com/@parikshit/understanding-the-context-package-in-golang-b1392c821d14)
+- [Graceful Shutdown in Go: Practical Patterns](https://victoriametrics.com/blog/go-graceful-shutdown/)
+- [How to parse a JSON request body in Go](https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body)
+- [slack-go -- Send message to Slack channel](https://github.com/slack-go/slack/blob/master/examples/messages/messages.go)
+- [Stackoverflow -- different about withcancel and withtimeout in golang's context](https://stackoverflow.com/q/56721676/2200798)
+- [Code Snippet -- How to use `kubectl-ai` natively in Go](https://gist.github.com/veerendra2/160533bfce722cf3d853bf500bc8f407)

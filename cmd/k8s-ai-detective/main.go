@@ -23,7 +23,7 @@ import (
 const AppName = "k8s-ai-detective"
 
 var cli struct {
-	Address string `env:"ADDRESS" default:":8080" help:"The address where the server should listen on."`
+	Address string `env:"ADDRESS" default:":8085" help:"The address where the server should listen on."`
 
 	ConfigFilePath string `name:"config-file-path" help:"Config file path." env:"CONFIG_FILE_PATH" default:"./config.yml"`
 
@@ -41,6 +41,8 @@ func main() {
 	)
 
 	kongCtx.FatalIfErrorf(kongCtx.Error)
+
+	rootCtx := context.Background()
 
 	slog.SetDefault(slogger.New(cli.Log))
 
@@ -62,9 +64,9 @@ func main() {
 	}
 
 	// Verify AI client is working
-	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-	defer cancel()
-	res, err := aiClient.RunQuietPrompt(ctx, "Ping test — short reply only, no emojis")
+	aiTestCtx, aiTestCancel := context.WithTimeout(rootCtx, 120*time.Second)
+	defer aiTestCancel()
+	res, err := aiClient.RunQuietPrompt(aiTestCtx, "Ping test — short reply only, no emojis")
 	if err != nil {
 		slog.Error("kubectl-ai test failed", "error", err)
 		kongCtx.Exit(1)
@@ -79,7 +81,7 @@ func main() {
 	}
 
 	// Start processor
-	if err := processorClient.Start(context.Background()); err != nil {
+	if err := processorClient.Start(rootCtx); err != nil {
 		slog.Error("Failed to start processor", "error", err)
 		kongCtx.Exit(1)
 	}

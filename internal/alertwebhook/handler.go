@@ -25,7 +25,6 @@ func (h *Handler) AlertsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body
 	ct := r.Header.Get("Content-Type")
 	if ct != "" {
 		mediaType := strings.ToLower(strings.TrimSpace(strings.Split(ct, ";")[0]))
