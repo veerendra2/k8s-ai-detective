@@ -67,7 +67,20 @@ func (c *client) RunQuietPrompt(ctx context.Context, prompt string) (string, err
 		return "", fmt.Errorf("kubectl-ai failed: %w", err)
 	}
 
-	return out.String(), nil
+	output := out.String()
+
+	// Extract the summary after the delimiter "-----"
+	// NOTE: This delimiter is expected as specified in the prompt
+	// See `promptTpl1` constant in the internal/processor package
+	// TODO: Consider decoupling this delimiter configuration from this function
+	const delimiter = "-----"
+	parts := strings.SplitN(output, delimiter, 2)
+	if len(parts) < 2 {
+		slog.Warn("Delimiter not found in kubectl-ai output, returning full output", "delimiter", delimiter, "output", output)
+		return strings.TrimSpace(output), nil
+	}
+
+	return strings.TrimSpace(parts[1]), nil
 }
 
 func NewClient(config Config) (Client, error) {

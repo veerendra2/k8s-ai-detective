@@ -57,7 +57,6 @@ func (c *client) Start(ctx context.Context) error {
 
 	for i := 0; i < int(c.workerCount); i++ {
 		c.wg.Add(1)
-		slog.Info("Starting worker...", "worker_id", i)
 		go c.worker(ctx, i)
 	}
 	return nil

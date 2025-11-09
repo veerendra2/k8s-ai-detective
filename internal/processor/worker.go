@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log/slog"
 
@@ -12,14 +13,16 @@ import (
 )
 
 const promptTpl1 = `The following JSON, {{ .AlertJSON }}, contains details of an alert from Alertmanager.
-Use the information in the "labels" field such as "namespace", "pod", "container", and other relevant
-identifiers to investigate the issue. Perform only basic diagnostic reasoning: review logs, events, and
-errors related to the affected resources. Do not make any modifications, write any data, or ask for user
-confirmation. Identify the affected resources, check recent logs and Kubernetes events for errors,
-warnings, or anomalies, and determine the likely cause of the alert. Output only a short summary of your
-findings, no more than three to five lines. Do not include any reasoning, explanation of your thought
-process, or markdown formatting. The output must be concise, factual, and directly actionable, describing
-only the key issues or anomalies related to the alert.
+	Use the information in the "labels" field such as "namespace", "pod", "container", and other relevant
+	identifiers to investigate the issue. Perform only basic diagnostic reasoning: review logs, events, and
+	errors related to the affected resources. Do not make any modifications, write any data, or ask for user
+	confirmation. Identify the affected resources, check recent logs and Kubernetes events for errors,
+	warnings, or anomalies, and determine the likely cause of the alert.
+
+	Output only a short summary of your findings, no more than three to five lines. The summary must start with
+	the delimiter "-----" (exactly five hyphens) to clearly indicate the beginning of the summary. Do not include
+	any reasoning, explanation of your thought process, or markdown formatting. The output must be concise,
+	factual, and directly actionable, describing only the key issues or anomalies related to the alert.
 `
 
 func (c *client) worker(ctx context.Context, id int) {
@@ -37,31 +40,26 @@ func (c *client) worker(ctx context.Context, id int) {
 
 			// Ensure alert processing completes within the specified timeout
 			workerCtx, cancel := context.WithTimeout(ctx, c.workerTimeout)
-			c.processAlert(workerCtx, item.Alert, id)
+			err := c.processAlert(workerCtx, item.Alert, id)
+			if err != nil {
+				slog.Error("Errors during processing the alert", "worker_id", id, "error", err)
+			}
 			cancel()
 		}
 	}
 }
 
-func (c *client) processAlert(ctx context.Context, alert models.Alert, id int) {
-	defer func() {
-		if r := recover(); r != nil {
-			slog.Error("Recovered from panic in processAlert", "worker_id", id, "error", r)
-		}
-	}()
-
+func (c *client) processAlert(ctx context.Context, alert models.Alert, id int) error {
 	// Serialize the alert to JSON
 	alertJSON, err := json.Marshal(alert)
 	if err != nil {
-		slog.Error("Failed to marshal alert to JSON", "worker_id", id, "error", err)
-		return
+		return fmt.Errorf("failed to parse alert json: %w", err)
 	}
 
 	// Parse the prompt template from constants
 	tmpl, err := template.New("prompt").Parse(promptTpl1)
 	if err != nil {
-		slog.Error("Failed to parse prompt template", "worker_id", id, "error", err)
-		return
+		return fmt.Errorf("failed to parse prompt template: %w", err)
 	}
 
 	// Fill the template with the alert JSON
@@ -70,16 +68,14 @@ func (c *client) processAlert(ctx context.Context, alert models.Alert, id int) {
 		"AlertJSON": string(alertJSON),
 	})
 	if err != nil {
-		slog.Error("Failed to execute prompt template", "worker_id", id, "error", err)
-		return
+		return fmt.Errorf("failed to execute prompt template: %w", err)
 	}
 
 	// Run the AI prompt
 	prompt := promptBuffer.String()
 	output, err := c.aiClient.RunQuietPrompt(ctx, prompt)
 	if err != nil {
-		slog.Error("Failed to run AI prompt", "worker_id", id, "error", err)
-		return
+		return fmt.Errorf("failed to run kubectl-ai: %w", err)
 	}
 
 	// Send the output to the Slack channel
@@ -94,9 +90,10 @@ func (c *client) processAlert(ctx context.Context, alert models.Alert, id int) {
 		slack.MsgOptionAttachments(attachment),
 	)
 	if err != nil {
-		slog.Error("Failed to send message to Slack", "worker_id", id, "error", err)
-		return
+		return fmt.Errorf("failed to post message to slack channel: %w", err)
 	}
 
-	slog.Info("Sent message to Slack", "worker_id", id, "channel_id", respChannelId, "timestamp", timestamp)
+	slog.Info("Post message to Slack", "worker_id", id, "channel_id", respChannelId, "timestamp", timestamp)
+
+	return nil
 }
