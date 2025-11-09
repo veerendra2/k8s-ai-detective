@@ -8,7 +8,7 @@ K8s AI Detective is a tool designed to automate debugging and summarizing issues
   <img src="./assets/logo.png" alt="logo" width="100"/>
 </p>
 
-![Demo Video](./assets/demo.mov)
+https://github.com/user-attachments/assets/69100b34-6fad-4169-9d26-77ec6855dff4
 
 ## Usage
 
