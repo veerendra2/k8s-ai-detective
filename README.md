@@ -1,6 +1,6 @@
 # K8s AI Detective
 
-> ⚠️ _\*This tool was created out of curiosity during a hackathon. It hasn’t been thoroughly tested and still requires improvements._
+> ⚠️ _This tool was created out of curiosity during a hackathon. It hasn’t been thoroughly tested and still requires improvements._
 
 K8s AI Detective is a tool designed to automate debugging and summarizing issues when an alert is triggered. It leverages [`kubectl-ai`](https://github.com/GoogleCloudPlatform/kubectl-ai) to analyze the alert context, gather relevant information (such as logs, events, and resource states), and generate an initial summary.
 
